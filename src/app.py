@@ -21,7 +21,8 @@ def get_daily_game():
 def generate_daily_game(theme):
     request = search_genius_with_theme(theme)
     DAILY_GAME_STATE.update({"date": get_today().strftime("%B %d, %Y")})
-    DAILY_GAME_STATE.update({"songs": {}})
+    DAILY_GAME_STATE.update({"theme": theme})
+    DAILY_GAME_STATE.update({"songs": []})
     for hit in request['sections'][0]['hits']:
         if len(DAILY_GAME_STATE["songs"]) >= 4:
             break
@@ -34,9 +35,8 @@ def generate_daily_game(theme):
             grouped_words = [' '.join(words[i: i + counter])
                              for i in range(0, 3 * counter, counter)]
             grouped_words.append(' '.join(words[3 * counter:]))
-            song_name = 'song_' + title[:3].upper()
             song = {"lyrics": grouped_words, "title": title}
-            DAILY_GAME_STATE["songs"].update({song_name: song})
+            DAILY_GAME_STATE["songs"].append(song)
 
 def get_today():
     return datetime.date.today()

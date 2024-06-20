@@ -105,10 +105,11 @@ def test_generate_daily_game_success(mocker):
                                     "eighteen nineteen twenty"],
                           'title':"Four Title"}
     expected_game_state = {'date':'May 24, 2024',
-                           'songs':{'song_ONE':expected_song_one,
-                                    'song_TWO':expected_song_two,
-                                    'song_THR':expected_song_three,
-                                    'song_FOU':expected_song_four}}
+                           'theme': 'test',
+                           'songs':[expected_song_one,
+                                    expected_song_two,
+                                    expected_song_three,
+                                    expected_song_four]}
     mocker.patch("src.app.get_today", return_value = date(2024, 5, 24))
     mocker.patch("src.app.search_genius_with_theme", return_value=mock_genius_search_return)
 

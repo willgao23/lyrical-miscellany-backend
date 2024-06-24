@@ -27,7 +27,7 @@ def generate_daily_game(theme):
         if len(DAILY_GAME_STATE["songs"]) >= 4:
             break
         title = hit['result']['full_title'].replace('\xa0', ' ')
-        if title.count('Remix') == 0 and title.count('Romanized') == 0:
+        if title.count('Remix') == 0 and title.count('Romanized') == 0 and title.count('Chapter') == 0:
             lyrics =  hit['highlights'][0]['value'].lower()
             words = lyrics.split()
             words = words[1:len(words) - 1]

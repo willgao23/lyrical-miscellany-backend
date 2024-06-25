@@ -55,3 +55,6 @@ def search_genius_with_theme(theme):
 
 def get_daily_game_state():
     return DAILY_GAME_STATE
+
+if __name__ == "__main__":
+   app.run(host='0.0.0.0', port=5000)

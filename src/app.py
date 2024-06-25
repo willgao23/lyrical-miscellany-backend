@@ -3,6 +3,7 @@ import math
 import datetime
 
 from flask import Flask
+from waitress import serve
 from lyricsgenius import Genius
 
 app = Flask(__name__)
@@ -57,4 +58,4 @@ def get_daily_game_state():
     return DAILY_GAME_STATE
 
 if __name__ == "__main__":
-   app.run(host='0.0.0.0', port=5000)
+   serve(app, host='0.0.0.0', port=5000)

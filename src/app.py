@@ -2,7 +2,7 @@ import os
 import math
 from datetime import date
 
-from flask import Flask, request
+from flask import Flask, request, jsonify, make_response
 from waitress import serve
 from lyricsgenius import Genius
 
@@ -11,14 +11,19 @@ genius = Genius(os.environ['GENIUS_ACCESS_TOKEN'])
 DAILY_GAME_STATE = {}
 STARTING_DATE = date(2024, 6, 25)
 
-@app.post("/game")
+@app.route("/game", methods=["POST", "OPTIONS"])
 def get_daily_game():
-    data = request.get_json(force=True)
-    userDate = date(data["year"], data["month"], data["day"])
-    if (not DAILY_GAME_STATE or DAILY_GAME_STATE["date"] != date):
-        index = (userDate - STARTING_DATE).days
-        generate_daily_game(get_theme_word(index), userDate)
-    return DAILY_GAME_STATE
+    if request.method == "OPTIONS":
+        return _build_cors_preflight_response()
+    elif request.method == "POST": 
+        data = request.get_json(force=True)
+        userDate = date(data["year"], data["month"], data["day"])
+        if (not DAILY_GAME_STATE or DAILY_GAME_STATE["date"] != date):
+            index = (userDate - STARTING_DATE).days
+            generate_daily_game(get_theme_word(index), userDate)
+            return _corsify_actual_response(jsonify(DAILY_GAME_STATE))
+    else:
+        raise RuntimeError("Weird - don't know how to handle method {}".format(request.method))
 
 def generate_daily_game(theme, date):
     request = search_genius_with_theme(theme)
@@ -39,6 +44,17 @@ def generate_daily_game(theme, date):
             grouped_words.append(' '.join(words[3 * counter:]))
             song = {"lyrics": grouped_words, "title": title}
             DAILY_GAME_STATE["songs"].append(song)
+
+def _build_cors_preflight_response():
+    response = make_response()
+    response.headers.add("Access-Control-Allow-Origin", "*")
+    response.headers.add('Access-Control-Allow-Headers', "*")
+    response.headers.add('Access-Control-Allow-Methods', "*")
+    return response
+
+def _corsify_actual_response(response):
+    response.headers.add("Access-Control-Allow-Origin", "*")
+    return response
 
 def get_theme_word(index):
     with open('themes.txt', encoding="utf-8") as file:

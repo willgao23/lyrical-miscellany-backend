@@ -1,6 +1,6 @@
 import os
 import math
-from datetime import datetime, timezone, date
+from datetime import date
 
 from flask import Flask, request
 from waitress import serve
@@ -39,9 +39,6 @@ def generate_daily_game(theme, date):
             grouped_words.append(' '.join(words[3 * counter:]))
             song = {"lyrics": grouped_words, "title": title}
             DAILY_GAME_STATE["songs"].append(song)
-
-def get_today():
-    return datetime.now(timezone.utc)
 
 def get_theme_word(index):
     with open('themes.txt', encoding="utf-8") as file:

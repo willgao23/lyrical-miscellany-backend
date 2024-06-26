@@ -1,6 +1,6 @@
 {
     "lyrical-miscellany-backend": {
-        "image": ":lyrical-miscellany-backend.lyrical-miscellany-backend.2",
+        "image": ":lyrical-miscellany-backend.lyrical-miscellany-backend.3",
         "ports": {
             "5000": "HTTP"
         }

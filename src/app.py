@@ -1,27 +1,28 @@
 import os
 import math
-import datetime
+from datetime import datetime, timezone, date
 
-from flask import Flask
+from flask import Flask, request
 from waitress import serve
 from lyricsgenius import Genius
 
 app = Flask(__name__)
 genius = Genius(os.environ['GENIUS_ACCESS_TOKEN'])
 DAILY_GAME_STATE = {}
-CURRENT_THEME_NUM = 0
+STARTING_DATE = date(2024, 6, 25)
 
-@app.get("/game")
+@app.post("/game")
 def get_daily_game():
-    if not (DAILY_GAME_STATE and
-            get_today().strftime("%B %d, %Y") == DAILY_GAME_STATE["date"]):
-        generate_daily_game(get_theme_word())
-        increment_current_theme_num()
+    data = request.get_json(force=True)
+    userDate = date(data["year"], data["month"], data["day"])
+    if (not DAILY_GAME_STATE or DAILY_GAME_STATE["date"] != date):
+        index = (userDate - STARTING_DATE).days
+        generate_daily_game(get_theme_word(index), userDate)
     return DAILY_GAME_STATE
 
-def generate_daily_game(theme):
+def generate_daily_game(theme, date):
     request = search_genius_with_theme(theme)
-    DAILY_GAME_STATE.update({"date": get_today().strftime("%B %d, %Y")})
+    DAILY_GAME_STATE.update({"date": date.strftime("%B %d, %Y")})
     DAILY_GAME_STATE.update({"theme": theme})
     DAILY_GAME_STATE.update({"songs": []})
     for hit in request['sections'][0]['hits']:
@@ -40,16 +41,12 @@ def generate_daily_game(theme):
             DAILY_GAME_STATE["songs"].append(song)
 
 def get_today():
-    return datetime.date.today()
+    return datetime.now(timezone.utc)
 
-def get_theme_word():
+def get_theme_word(index):
     with open('themes.txt', encoding="utf-8") as file:
         themes = file.readlines()
-        return themes[CURRENT_THEME_NUM]
-
-def increment_current_theme_num():
-    global CURRENT_THEME_NUM
-    CURRENT_THEME_NUM += 1
+        return themes[index]
 
 def search_genius_with_theme(theme):
     return genius.search_lyrics(theme)

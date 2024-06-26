@@ -18,10 +18,10 @@ def get_daily_game():
     elif request.method == "POST": 
         data = request.get_json(force=True)
         userDate = date(data["year"], data["month"], data["day"])
-        if (not DAILY_GAME_STATE or DAILY_GAME_STATE["date"] != date):
+        if (not DAILY_GAME_STATE or DAILY_GAME_STATE["date"] != userDate.strftime("%B %d, %Y")):
             index = (userDate - STARTING_DATE).days
             generate_daily_game(get_theme_word(index), userDate)
-            return _corsify_actual_response(jsonify(DAILY_GAME_STATE))
+        return _corsify_actual_response(jsonify(DAILY_GAME_STATE))
     else:
         raise RuntimeError("Weird - don't know how to handle method {}".format(request.method))
 

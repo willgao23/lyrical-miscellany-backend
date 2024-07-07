@@ -4,3 +4,4 @@ pylint==3.2.2
 pytest==8.2.1
 pytest-mock==3.14.0
 waitress==3.0.0
+better_profanity==0.7.0

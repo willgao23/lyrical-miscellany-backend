@@ -10,6 +10,8 @@ COPY /src/themes.txt .
 
 COPY requirements.txt .
 
+RUN apk add --update alpine-sdk
+
 RUN pip install -r requirements.txt
 
 COPY /src/app.py .

@@ -5,7 +5,7 @@ from datetime import date
 from flask import Flask, request, jsonify, make_response
 from waitress import serve
 from lyricsgenius import Genius
-from better_profanity import profanity
+from profanity_check import predict
 
 app = Flask(__name__)
 genius = Genius(os.environ['GENIUS_ACCESS_TOKEN'])
@@ -34,9 +34,9 @@ def generate_daily_game(theme, date):
     for hit in request['sections'][0]['hits']:
         if len(DAILY_GAME_STATE["songs"]) >= 4:
             break
-        title = profanity.censor(hit['result']['full_title'].replace('\xa0', ' '))
+        title = censor(hit['result']['full_title'].replace('\xa0', ' '), False)
         if title.count('Remix') == 0 and title.count('Romanized') == 0 and title.count('Chapter') == 0:
-            lyrics = profanity.censor(hit['highlights'][0]['value'])
+            lyrics = censor(hit['highlights'][0]['value'], True)
             split_by_new_line = lyrics.split("\n")
             if len(split_by_new_line[0].split()) < 3:
                 split_by_new_line = split_by_new_line[1:]
@@ -76,10 +76,32 @@ def generate_daily_game(theme, date):
                 first_and_other_words = section.split(" ", 1)
                 if len(first_and_other_words[0]) == 1 and first_and_other_words[0] != "I":
                     section = first_and_other_words[1]
-                final_grouped_words.append(section.capitalize())
+                section = first_and_other_words[0].capitalize()
+                if len(first_and_other_words) == 2:
+                    section += " " + first_and_other_words[1]                   
+                final_grouped_words.append(section)
             if len(final_grouped_words) >= 4:
                 song = {"lyrics": final_grouped_words[:4], "title": title}
                 DAILY_GAME_STATE["songs"].append(song)
+
+def censor(string, isLyric):
+    line_array = string.split("\n")
+    censored_string = ""
+    for i in range(len(line_array)):
+        word_array = line_array[i].split()
+        profanity_check = predict(word_array)
+        censored_section = ""
+        for j in range(len(word_array)):
+            if profanity_check[j]:
+                censored_section += "****"
+            else:
+                censored_section += word_array[j]
+            if (j != len(word_array) - 1):
+                censored_section += " "
+        censored_string += censored_section
+        if (i != len(line_array) - 1) and isLyric:
+            censored_string += "\n"
+    return censored_string
 
 def _build_cors_preflight_response():
     response = make_response()

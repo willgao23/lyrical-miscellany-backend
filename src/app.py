@@ -5,7 +5,7 @@ from datetime import date
 from flask import Flask, request, jsonify, make_response
 from waitress import serve
 from lyricsgenius import Genius
-from profanity_check import predict
+from profanity_check import predict_prob
 
 app = Flask(__name__)
 genius = Genius(os.environ['GENIUS_ACCESS_TOKEN'])
@@ -34,65 +34,27 @@ def generate_daily_game(theme, date):
     for hit in request['sections'][0]['hits']:
         if len(DAILY_GAME_STATE["songs"]) >= 4:
             break
-        title = censor(hit['result']['full_title'].replace('\xa0', ' '), False)
+        title = hit['result']['full_title'].replace('\xa0', ' ')
         if title.count('Remix') == 0 and title.count('Romanized') == 0 and title.count('Chapter') == 0:
-            lyrics = censor(hit['highlights'][0]['value'], True)
-            split_by_new_line = lyrics.split("\n")
-            if len(split_by_new_line[0].split()) < 3:
-                split_by_new_line = split_by_new_line[1:]
-            elif len(split_by_new_line[-1].split()) < 3:
-                split_by_new_line = split_by_new_line[:-1]
-            updated_group_words = []
-            final_grouped_words = []
-            for i in range(len(split_by_new_line)):
-                lyric_section = split_by_new_line[i]
-                lyric_section_words = lyric_section.split()
-                delimiters = [" and ", ", ", " or "]
-                section_is_split = False
-                for delimiter in delimiters:
-                    if section_is_split:
-                        break
-                    if delimiter in lyric_section:
-                        partition = lyric_section.partition(delimiter)
-                        partition_start = partition[0] + delimiter
-                        partition_end = partition[2]
-                        partition_start_count = len(partition_start.split())
-                        partition_end_count = len(partition_end.split())
-                        if (partition_start_count > 2 and partition_end_count > 2):
-                            updated_group_words.append(partition_start)
-                            updated_group_words.append(partition_end)
-                            section_is_split = True
-                if not section_is_split:
-                    if len(lyric_section_words) > 7:
-                        counter = math.ceil(len(lyric_section_words) / 2)
-                        partition = [' '.join(lyric_section_words[i: i + counter])
-                                        for i in range(0, 2 * counter, counter)]
-                        updated_group_words.append(partition[0])
-                        updated_group_words.append(partition[1])
-                    else:
-                        updated_group_words.append(lyric_section)
-            for j in range(len(updated_group_words)):
-                section = updated_group_words[j]
-                first_and_other_words = section.split(" ", 1)
-                if len(first_and_other_words[0]) == 1 and first_and_other_words[0] != "I":
-                    section = first_and_other_words[1]
-                section = first_and_other_words[0].capitalize()
-                if len(first_and_other_words) == 2:
-                    section += " " + first_and_other_words[1]                   
-                final_grouped_words.append(section)
-            if len(final_grouped_words) >= 4:
-                song = {"lyrics": final_grouped_words[:4], "title": title}
-                DAILY_GAME_STATE["songs"].append(song)
+            lyrics = censor(hit['highlights'][0]['value'].lower())
+            words = lyrics.split()
+            words = words[1:len(words) - 1]
+            counter = math.floor(len(words) / 4)
+            grouped_words = [' '.join(words[i: i + counter])
+                             for i in range(0, 3 * counter, counter)]
+            grouped_words.append(' '.join(words[3 * counter:]))
+            song = {"lyrics": grouped_words, "title": title}
+            DAILY_GAME_STATE["songs"].append(song)
 
 def censor(string, isLyric):
     line_array = string.split("\n")
     censored_string = ""
     for i in range(len(line_array)):
         word_array = line_array[i].split()
-        profanity_check = predict(word_array)
+        profanity_check = predict_prob(word_array)
         censored_section = ""
         for j in range(len(word_array)):
-            if profanity_check[j]:
+            if profanity_check[j] > 0.9:
                 censored_section += "****"
             else:
                 censored_section += word_array[j]

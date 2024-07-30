@@ -34,9 +34,9 @@ def generate_daily_game(theme, date):
     for hit in request['sections'][0]['hits']:
         if len(DAILY_GAME_STATE["songs"]) >= 4:
             break
-        title = hit['result']['full_title'].replace('\xa0', ' ')
+        title = censor(hit['result']['full_title'].replace('\xa0', ' '), False)
         if title.count('Remix') == 0 and title.count('Romanized') == 0 and title.count('Chapter') == 0:
-            lyrics = censor(hit['highlights'][0]['value'].lower())
+            lyrics = censor(hit['highlights'][0]['value'].lower(), True)
             words = lyrics.split()
             words = words[1:len(words) - 1]
             counter = math.floor(len(words) / 4)

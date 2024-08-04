@@ -159,21 +159,6 @@ def corsify_actual_response(response):
     return response
 
 if __name__ == "__main__":
-    print(build_cors_preflight_response.__doc__)
-    print("\n-------")
-    print(corsify_actual_response.__doc__)
-    print("\n-------")
-    print(get_daily_game_state.__doc__)
-    print("\n-------")
-    print(search_genius_with_theme.__doc__)
-    print("\n-------")
-    print(get_theme_word.__doc__)
-    print("\n-------")
-    print(censor.__doc__)
-    print("\n-------")
-    print(generate_daily_game.__doc__)
-    print("\n-------")
-    print(get_daily_game.__doc__)
     serve(app, host='0.0.0.0', port=5000)
 
 

@@ -2,69 +2,89 @@ from datetime import date
 
 import src.app
 
-def test_get_daily_game_todays_game_state_exists_return_existing(mocker, client):
+def test_existing_game_state_returned(mocker, client):
     # Arrange
-    mock_daily_game_state = {"date": "May 25, 2024", "songs": {}}
-    mocker.patch("src.app.get_today", return_value = date(2024, 5, 25))
+    expected_song_one = {'lyrics':["test", "one", "two", "three"],
+                         'title':"One Title"}
+    expected_song_two = {'lyrics':["test,", "four!", "five?", "six()"],
+                         'title':"Two Title"}
+    expected_song_three = {'lyrics':["test", "seven", "eight", "nine ten eleven twelve"],
+                           'title':"Three Title"}
+    expected_song_four = {'lyrics':["test thirteen",
+                                    "fourteen fifteen",
+                                    "sixteen seventeen",
+                                    "eighteen nineteen twenty"],
+                          'title':"Four Title"}
+    mock_daily_game_state = {'date':'May 24, 2024',
+                           'theme': 'test',
+                           'songs':[expected_song_one,
+                                    expected_song_two,
+                                    expected_song_three,
+                                    expected_song_four]}
     mocker.patch("src.app.DAILY_GAME_STATE", new=mock_daily_game_state)
-    mocker.patch("src.app.CURRENT_THEME_NUM", new=0)
     spy_game_generator = mocker.spy(src.app, "generate_daily_game")
 
     # Act
-    response = client.get("/game")
+    request = {'year': 2024, 'month': 5, 'day': 24}
+    response = client.post(
+        '/game',
+        json=request
+    )
 
     # Assert
     assert response.status_code == 200
     assert response.get_json() == mock_daily_game_state
     assert spy_game_generator.call_count == 0
 
-def test_get_daily_game_no_daily_game_state_generate_new(mocker, client):
+def test_empty_existing_game_state(mocker, client):
     # Arrange
-    mocker.patch("src.app.get_today", return_value = date(2024, 5, 25))
     mocker.patch("src.app.get_theme_word", return_value = "mockTheme")
     mocker.patch("src.app.DAILY_GAME_STATE", new={})
-    mocker.patch("src.app.CURRENT_THEME_NUM", new=0)
     spy_game_generator = mocker.spy(src.app, "generate_daily_game")
-    spy_increment = mocker.spy(src.app, "increment_current_theme_num")
 
     # Act
-    response = client.get("/game")
+    request = {'year': 2024, 'month': 5, 'day': 24}
+    response = client.post(
+        '/game',
+        json=request
+    )
 
     # Assert
     assert response.status_code == 200
     assert spy_game_generator.call_count == 1
-    assert spy_increment.call_count == 1
-    spy_game_generator.assert_called_with("mockTheme")
+    spy_game_generator.assert_called_with("mockTheme", date(2024, 5, 24))
 
-def test_get_daily_game_new_day_generate_new(mocker, client):
+def test_existing_game_state_for_different_date(mocker, client):
     # Arrange
-    mock_daily_game_state = {"date": "May 25, 2024", "songs": {}}
-    mocker.patch("src.app.get_today", return_value = date(2024, 5, 26))
+    mock_daily_game_state = {"date": "May 23, 2024", "songs": {}}
     mocker.patch("src.app.get_theme_word", return_value = "mockTheme")
     mocker.patch("src.app.DAILY_GAME_STATE", new=mock_daily_game_state)
-    mocker.patch("src.app.CURRENT_THEME_NUM", new=0)
     spy_game_generator = mocker.spy(src.app, "generate_daily_game")
-    spy_increment = mocker.spy(src.app, "increment_current_theme_num")
 
     # Act
-    response = client.get("/game")
+    request = {'year': 2024, 'month': 5, 'day': 24}
+    response = client.post(
+        '/game',
+        json=request
+    )
 
     # Assert
     assert response.status_code == 200
     assert spy_game_generator.call_count == 1
-    assert spy_increment.call_count == 1
-    spy_game_generator.assert_called_with("mockTheme")
+    spy_game_generator.assert_called_with("mockTheme", date(2024, 5, 24))
 
 def test_get_daily_game_exception_raised(mocker, client):
     # Arrange
-    mocker.patch("src.app.get_today", return_value = date(2024, 5, 25))
     mocker.patch("src.app.get_theme_word", return_value = "mockTheme")
     mocker.patch("src.app.DAILY_GAME_STATE", new={})
-    mocker.patch("src.app.CURRENT_THEME_NUM", new=0)
     mocker.patch("src.app.generate_daily_game", side_effect=Exception("Error"))
 
     # Act
-    response = client.get("/game")
+    request = {'year': 2024, 'month': 5, 'day': 24}
+    response = client.post(
+        '/game',
+        json=request
+    )
 
     # Assert
     assert response.status_code == 500
@@ -110,11 +130,10 @@ def test_generate_daily_game_success(mocker):
                                     expected_song_two,
                                     expected_song_three,
                                     expected_song_four]}
-    mocker.patch("src.app.get_today", return_value = date(2024, 5, 24))
     mocker.patch("src.app.search_genius_with_theme", return_value=mock_genius_search_return)
 
     # Act
-    src.app.generate_daily_game("test")
+    src.app.generate_daily_game("test", date(2024, 5, 24))
 
     # Assert
     assert src.app.get_daily_game_state() == expected_game_state

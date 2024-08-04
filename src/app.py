@@ -62,14 +62,14 @@ def get_daily_game():
                     description: the title of the song
     """
     if request.method == "OPTIONS":
-        return _build_cors_preflight_response()
+        return build_cors_preflight_response()
     elif request.method == "POST": 
         data = request.get_json(force=True)
         userDate = date(data["year"], data["month"], data["day"])
         if (not DAILY_GAME_STATE or DAILY_GAME_STATE["date"] != userDate.strftime("%B %d, %Y")):
             index = (userDate - RELEASE_DATE).days
             generate_daily_game(get_theme_word(index), userDate)
-        return _corsify_actual_response(jsonify(DAILY_GAME_STATE))
+        return corsify_actual_response(jsonify(DAILY_GAME_STATE))
     else:
         raise RuntimeError("Weird - don't know how to handle method {}".format(request.method))
     
@@ -101,7 +101,6 @@ def generate_daily_game(theme, date):
 def censor(string, isLyric):
     '''
     Censors a given string 
-    If isLyric is true, reformat string by adding back a newline character at the end of every line
     '''
     line_array = string.split("\n")
     censored_string = ""
@@ -132,8 +131,7 @@ def get_theme_word(index):
 
 def search_genius_with_theme(theme):
     '''
-    Use the Genius Lyrics API to search for lyrics containing the theme word(s)
-    Primarily a utility method so that the Genius API response can be mocked in unit testing
+    A wrapper method using the Genius Lyrics API to search for lyrics containing the theme word(s), added primarily so that the API response can be mocked in unit testing
     '''
     return genius.search_lyrics(theme)
 
@@ -143,7 +141,7 @@ def get_daily_game_state():
     '''
     return DAILY_GAME_STATE
 
-def _build_cors_preflight_response():
+def build_cors_preflight_response():
     '''
     Add the necessary CORS headers when a preflight request is made
     '''
@@ -153,7 +151,7 @@ def _build_cors_preflight_response():
     response.headers.add('Access-Control-Allow-Methods', "*")
     return response
 
-def _corsify_actual_response(response):
+def corsify_actual_response(response):
     '''
     Add the neccessary CORS header to the response
     '''
@@ -161,4 +159,22 @@ def _corsify_actual_response(response):
     return response
 
 if __name__ == "__main__":
+    print(build_cors_preflight_response.__doc__)
+    print("\n-------")
+    print(corsify_actual_response.__doc__)
+    print("\n-------")
+    print(get_daily_game_state.__doc__)
+    print("\n-------")
+    print(search_genius_with_theme.__doc__)
+    print("\n-------")
+    print(get_theme_word.__doc__)
+    print("\n-------")
+    print(censor.__doc__)
+    print("\n-------")
+    print(generate_daily_game.__doc__)
+    print("\n-------")
+    print(get_daily_game.__doc__)
     serve(app, host='0.0.0.0', port=5000)
+
+
+

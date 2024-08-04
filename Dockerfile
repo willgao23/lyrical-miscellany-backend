@@ -1,4 +1,4 @@
-FROM python:3.12-alpine
+FROM python:latest
 
 ENV GENIUS_ACCESS_TOKEN="Your Genius Access Token"
 
@@ -9,8 +9,6 @@ WORKDIR /src/
 COPY /src/themes.txt .
 
 COPY requirements.txt .
-
-RUN apk add --update alpine-sdk
 
 RUN pip install -r requirements.txt
 
